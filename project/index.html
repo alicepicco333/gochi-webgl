@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>GOCHI</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="loadingOverlay" aria-live="polite">
+    <div id="loadingTitle">GOCHI</div>
+    <div id="loadingSpinner" aria-hidden="true"></div>
+  </div>
+
+  <canvas id="webglcanvas" width="1920" height="1080"></canvas>
+
+  <div id="ui">
+    <button id="feedBtn">🍎 Feed</button>
+    <button id="cheerBtn">😊 Cheer</button>
+    <!-- Controls moved to dat.GUI -->
+    <div id="hud">
+      <div class="stat-row">
+        <span class="stat-label">Hunger</span>
+        <div class="progress-bar">
+          <div id="hungerBar" class="progress-fill hunger-fill"></div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Mood</span>
+        <div class="progress-bar">
+          <div id="moodBar" class="progress-fill mood-fill"></div>
+        </div>
+      </div>
+      <div><span class="hud-label">Size:</span> <span id="sizeVal">1.00</span></div>
+      <div><span class="hud-label">Light:</span> <span id="lightVal">Day</span></div>
+    </div>
+  </div>
+
+  <script src="./jquery-3.6.0.js"></script>
+  <script src="./dat.gui.js"></script>
+  <script src="./webgl-utils.js"></script>
+  <script src="./m4.js"></script>
+  <script src="./mesh_utils.js"></script>
+  <script src="./glm_utils.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
