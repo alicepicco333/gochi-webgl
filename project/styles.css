@@ -199,3 +199,37 @@ canvas {
 @keyframes gochiSpin {
   to { transform: rotate(360deg); }
 }
+
+@media (max-width: 768px) {
+  #ui {
+    flex-direction: column; /* Dispone i blocchi uno sopra l'altro su schermi piccoli */
+    align-items: stretch;   /* Allarga i pannelli per occupare lo spazio disponibile */
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    gap: 8px;              /* Riduce lo spazio tra i pannelli per risparmiare pixel */
+  }
+
+  /* Crea una riga dedicata solo ai due bottoni di interazione */
+  #feedBtn, #cheerBtn {
+    flex: 1;
+    padding: 12px;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  /* Per mettere i due pulsanti uno di fianco all'altro e i pannelli sotto */
+  #ui {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: 
+      "feed cheer"
+      "hud hud"
+      "legend legend";
+  }
+
+  #feedBtn { grid-area: feed; }
+  #cheerBtn { grid-area: cheer; }
+  #hud { grid-area: hud; min-width: 0; }
+  .controls-legend { grid-area: legend; min-width: 0; font-size: 10px; }
+}
