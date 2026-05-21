@@ -406,6 +406,9 @@ const state = {
   size: 1.0,
   targetSize: 1.0,
 
+  //Giorno e notte
+  isNight: false, // false = Giorno, true = Notte
+
   // Rotazione guidata dal touch
   rotY: 0,
   rotX: 0.2,
@@ -427,11 +430,15 @@ const STAT_STEP_MS = 5000;
 const MIN_SIZE = 0.15;
 const MAX_SIZE = 0.75;
 
-// CONTROLLI TOUCH
-// Permette di ruotare la scena trascinando sul canvas (mobile-friendly)
+// CONTROLLI TOUCH & CLICK INTEGRATI (Evita conflitti tra rotazione e click)
 let touching = false;
 let lastTouchX = 0;
 let lastTouchY = 0;
+
+// Variabili civetta per capire se l'utente ha ruotato o solo cliccato
+let touchStartX = 0;
+let touchStartY = 0;
+let hasMoved = false;
 
 // Touch start - inizio tracciamento
 canvas.addEventListener("touchstart", function(e) {
@@ -439,6 +446,11 @@ canvas.addEventListener("touchstart", function(e) {
   const t = e.touches[0];
   lastTouchX = t.clientX;
   lastTouchY = t.clientY;
+  
+  // Memorizziamo dove è iniziato il tocco
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
+  hasMoved = false; // Reset ad ogni nuovo tocco
 }, { passive: false });
 
 // Touch move - aggiorna la rotazione in base al trascinamento
@@ -452,6 +464,13 @@ canvas.addEventListener("touchmove", function(e) {
   lastTouchX = t.clientX;
   lastTouchY = t.clientY;
 
+  // Se lo spostamento complessivo dall'inizio è significativo, allora sta ruotando
+  const totalDistX = Math.abs(t.clientX - touchStartX);
+  const totalDistY = Math.abs(t.clientY - touchStartY);
+  if (totalDistX > 5 || totalDistY > 5) {
+    hasMoved = true;
+  }
+
   // Sensibilità rotazione (pixel -> radianti)
   const s = 0.006;
 
@@ -462,8 +481,20 @@ canvas.addEventListener("touchmove", function(e) {
   state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX));
 }, { passive: false });
 
-// Touch end - termina tracciamento
-canvas.addEventListener("touchend", function() { touching = false; });
+// Touch end - determina se era un click o una rotazione terminata
+canvas.addEventListener("touchend", function(e) {
+  touching = false;
+
+  // SE IL DITO NON SI È SPOSTATO, È UN CLICK REGOLARE
+  if (!hasMoved) {
+    state.isNight = !state.isNight;
+    console.log("Cambio ciclo giorno/notte! Notte:", state.isNight);
+    
+    // Aggiorna l'interfaccia HUD
+    updateHud();
+  }
+});
+
 canvas.addEventListener("touchcancel", function() { touching = false; });
 
 // CONTROLLI TASTIERA
@@ -491,6 +522,32 @@ $(document).on('keydown', function(e) {
       state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX)); // limitazione
       e.preventDefault();
       break;
+  }
+});
+
+//CONTROLLI MOUSE
+
+// CONTROLLI MOUSE - GESTIONE CLICK SICURA SENZA CONFLITTI DI TRASCINAMENTO
+let mouseStartX = 0;
+let mouseStartY = 0;
+
+$(canvas).on('mousedown', function(e) {
+  mouseStartX = e.clientX;
+  mouseStartY = e.clientY;
+});
+
+$(canvas).on('mouseup', function(e) {
+  // Calcola di quanti pixel si è spostato il mouse tra la pressione e il rilascio
+  const deltaX = Math.abs(e.clientX - mouseStartX);
+  const deltaY = Math.abs(e.clientY - mouseStartY);
+
+  // Se lo spostamento è minimo (meno di 5 pixel), l'utente voleva fare un CLICK, non ruotare
+  if (deltaX < 5 && deltaY < 5) {
+    state.isNight = !state.isNight;
+    console.log("Cambio ciclo eseguito! Notte =", state.isNight);
+    
+    // Forza un aggiornamento immediato dell'interfaccia testuale
+    updateHud();
   }
 });
 
@@ -693,8 +750,9 @@ function updateHud() {
   $(moodBar).css('width', moodPercent + '%');
 
   $(sizeVal).text(state.size.toFixed(2));
-  $(lightVal).text('Day');
-}
+if (lightVal) {
+  lightVal.textContent = state.isNight ? 'Night' : 'Day';
+}}
 
 function drawCreature(rotatedVP, sceneRotation, planeY) {
   const meshScale = state.size;
@@ -841,7 +899,7 @@ function drawPlanet(rotatedVP, sceneRotation, sunLightPos, sunLightColor, ambien
   gl.useProgram(program);
 }
 
-function drawSun(rotatedVP, sunBasePos) {
+function drawSun(rotatedVP, sunBasePos, currentSunColor) { // Aggiunto parametro currentSunColor
   if (!sunProgram || !sphereBufPos || sphereVertCount <= 0) return;
 
   gl.useProgram(sunProgram);
@@ -854,19 +912,21 @@ function drawSun(rotatedVP, sunBasePos) {
   const sunUMVP = gl.getUniformLocation(sunProgram, "uMVP");
   const sunUColor = gl.getUniformLocation(sunProgram, "uSunColor");
 
-  // Sole
+  // Sole / Luna
   const sunScale = 0.35;
   const sunMVP = mat4Mul(rotatedVP, mat4Mul(
     mat4Translate(sunBasePos[0], sunBasePos[1], sunBasePos[2]),
     mat4Scale(sunScale, sunScale, sunScale)
   ));
   gl.uniformMatrix4fv(sunUMVP, false, sunMVP);
-  gl.uniform3f(sunUColor, 1.0, 0.92, 0.52);
+  
+  // Applica il colore passato (giallo di giorno, azzurro pallido di notte)
+  gl.uniform3fv(sunUColor, currentSunColor); 
+  
   gl.drawArrays(gl.TRIANGLES, 0, sphereVertCount);
 
   gl.useProgram(program);
 }
-
 
 
 // FUNZIONE DI RENDERING
@@ -898,35 +958,48 @@ function render() {
 
   const sunLightPos = mat4TransformPoint(sceneRotation, SUN_BASE_POS);
 
-  // Cielo fisso diurno
-  gl.clearColor(0.44, 0.62, 0.86, 1.0);
+  let skyColor, sunLightColor, ambientColor, fillLightColor, sunHexColor;
+
+  if (!state.isNight) {
+    // Colori diurni (quelli originali del tuo codice)
+    skyColor = [0.44, 0.62, 0.86, 1.0];
+    sunLightColor = [1.05, 0.95, 0.78];
+    ambientColor = [0.22, 0.24, 0.28];
+    fillLightColor = [0.06, 0.07, 0.10];
+    sunHexColor = [1.0, 0.92, 0.52]; // Giallo caldo per il sole
+  } else {
+    // Colori notturni (nuovi per l'esame)
+    skyColor = [0.04, 0.06, 0.14, 1.0];      // Blu notte scuro
+    sunLightColor = [0.30, 0.40, 0.65];     // Luce lunare soffusa e fredda
+    ambientColor = [0.06, 0.08, 0.15];      // Ombre scure tendenti al blu/notte
+    fillLightColor = [0.01, 0.01, 0.03];     // Luce di riempimento quasi azzerata
+    sunHexColor = [0.90, 0.93, 1.0];        // Bianco/Azzurro pallido per la luna
+  }
+
+  // Applica il colore del cielo
+  gl.clearColor(skyColor[0], skyColor[1], skyColor[2], skyColor[3]);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Abilita il depth testing (gli oggetti più vicini occludono quelli più lontani)
   gl.enable(gl.DEPTH_TEST);
-  // Abilita il face culling per mostrare solo i lati frontali dei poligoni
   gl.enable(gl.CULL_FACE);
 
-  const sunLightColor = [1.05, 0.95, 0.78];
-  const ambientColor = [0.22, 0.24, 0.28];
-  const fillLightColor = [0.06, 0.07, 0.10];
 
+// Invia i colori correnti agli shader
   if (uLightPos) gl.uniform3fv(uLightPos, sunLightPos);
   if (uLightColor) gl.uniform3fv(uLightColor, sunLightColor);
   if (uAmbientColor) gl.uniform3fv(uAmbientColor, ambientColor);
   if (uFillLightColor) gl.uniform3fv(uFillLightColor, fillLightColor);
 
-  // Costruisci view-projection con la rotazione scena applicata
   const viewProjection = mat4Mul(projectionMatrix, viewMatrix);
   const rotatedVP = mat4Mul(viewProjection, sceneRotation);
 
   const planeY = -1.5;
   drawCreature(rotatedVP, sceneRotation, planeY);
   drawGrass(rotatedVP, sceneRotation, planeY, sunLightPos, sunLightColor, ambientColor, fillLightColor);
-
   drawPlanet(rotatedVP, sceneRotation, sunLightPos, sunLightColor, ambientColor, fillLightColor);
 
-  drawSun(rotatedVP, SUN_BASE_POS);
+  // Passiamo il colore dinamico alla funzione che disegna il sole/luna
+  drawSun(rotatedVP, SUN_BASE_POS, sunHexColor);
 
   const err = gl.getError();
   if (err !== 0) console.warn('GL error after draw:', err);
