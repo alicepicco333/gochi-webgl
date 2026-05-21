@@ -467,7 +467,7 @@ canvas.addEventListener("touchmove", function(e) {
   // Se lo spostamento complessivo dall'inizio è significativo, allora sta ruotando
   const totalDistX = Math.abs(t.clientX - touchStartX);
   const totalDistY = Math.abs(t.clientY - touchStartY);
-  if (totalDistX > 5 || totalDistY > 5) {
+  if (totalDistX > 15 || totalDistY > 15) {
     hasMoved = true;
   }
 
@@ -945,7 +945,7 @@ function render() {
 
   // --- CAMERA E PROIEZIONE ---
   const aspectRatio = canvas.width / canvas.height;
-  const projectionMatrix = mat4Perspective(Math.PI / 4, aspectRatio, 0.1, 100.0); // fov 45 gradi
+  const projectionMatrix = mat4Perspective(Math.PI / 4, aspectRatio, 0.1, 1000.0); // fov 45 gradi
   const camEye = [state.camX, state.camY, state.camZ];
   const camLook = [0, 0, 0];
   const camUp = [0, 1, 0];
