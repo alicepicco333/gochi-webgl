@@ -387,7 +387,7 @@ const uLightColor = gl.getUniformLocation(program, "uLightColor");
 const uAmbientColor = gl.getUniformLocation(program, "uAmbientColor");
 const uFillLightColor = gl.getUniformLocation(program, "uFillLightColor");
 
-const SUN_BASE_POS = [5.4, 4.8, 2.4];
+const SUN_BASE_POS = [1.4, 4.8, 2.4];
 
 // STATO DEL GIOCO
 // Oggetto centrale che traccia tutte le variabili di gioco
@@ -430,32 +430,32 @@ const STAT_STEP_MS = 5000;
 const MIN_SIZE = 0.15;
 const MAX_SIZE = 0.75;
 
-// CONTROLLI TOUCH & CLICK INTEGRATI (Evita conflitti tra rotazione e click)
+// ==========================================
+// CONTROLLI INTERATTIVI (TOUCH, TASTIERA, MOUSE)
+// ==========================================
+
+// --- 1. CONTROLLI TOUCH (Mobile: Trascina = Ruota, Tap Secco = Giorno/Notte) ---
 let touching = false;
 let lastTouchX = 0;
 let lastTouchY = 0;
 
-// Variabili civetta per capire se l'utente ha ruotato o solo cliccato
 let touchStartX = 0;
 let touchStartY = 0;
 let hasMoved = false;
+let lastTapTime = 0; // <--- Variabile Cooldown per bloccare lo sfarfallio
 
-// Touch start - inizio tracciamento
 canvas.addEventListener("touchstart", function(e) {
   touching = true;
   const t = e.touches[0];
   lastTouchX = t.clientX;
   lastTouchY = t.clientY;
   
-  // Memorizziamo dove è iniziato il tocco
   touchStartX = t.clientX;
   touchStartY = t.clientY;
-  hasMoved = false; // Reset ad ogni nuovo tocco
-}, { passive: false });
+  hasMoved = false; 
+}, { passive: true });
 
-// Touch move - aggiorna la rotazione in base al trascinamento
 canvas.addEventListener("touchmove", function(e) {
-  e.preventDefault();
   if (!touching) return;
 
   const t = e.touches[0];
@@ -464,44 +464,38 @@ canvas.addEventListener("touchmove", function(e) {
   lastTouchX = t.clientX;
   lastTouchY = t.clientY;
 
-  // Se lo spostamento complessivo dall'inizio è significativo, allora sta ruotando
+  // Controllo base standard (se si muove anche di poco, è una rotazione)
   const totalDistX = Math.abs(t.clientX - touchStartX);
   const totalDistY = Math.abs(t.clientY - touchStartY);
-  if (totalDistX > 15 || totalDistY > 15) {
+  if (totalDistX > 5 || totalDistY > 5) {
     hasMoved = true;
   }
 
-  // Sensibilità rotazione (pixel -> radianti)
-  const s = 0.006;
-
+  const s = 0.006; 
   state.rotY += dx * s;
   state.rotX += dy * s;
-
-  // Limita X per evitare ribaltamenti
   state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX));
-}, { passive: false });
+}, { passive: true });
 
-// Touch end - determina se era un click o una rotazione terminata
-canvas.addEventListener("touchend", function(e) {
+canvas.addEventListener("touchend", function() {
   touching = false;
 
-  // SE IL DITO NON SI È SPOSTATO, È UN CLICK REGOLARE
-  if (!hasMoved) {
+  const now = Date.now();
+  // Se non si è spostato ED è passato abbastanza tempo dall'ultimo switch (400ms)
+  if (!hasMoved && (now - lastTapTime > 400)) {
+    lastTapTime = now; // Salva il tempo di questo click
     state.isNight = !state.isNight;
-    console.log("Cambio ciclo giorno/notte! Notte:", state.isNight);
-    
-    // Aggiorna l'interfaccia HUD
+    console.log("Cambio ciclo da Touch! Notte =", state.isNight);
     updateHud();
   }
 });
 
 canvas.addEventListener("touchcancel", function() { touching = false; });
 
-// CONTROLLI TASTIERA
-// Permette di ruotare la scena con i tasti freccia
-const KEYBOARD_ROTATION_SPEED = 0.05; // radianti per pressione tasto
 
-// >>> USO JQUERY: $(document).on() per eventi tastiera globali
+// --- 2. CONTROLLI TASTIERA (Rotazione della scena su Desktop) ---
+const KEYBOARD_ROTATION_SPEED = 0.05;
+
 $(document).on('keydown', function(e) {
   switch (e.key) {
     case "ArrowLeft":
@@ -514,55 +508,38 @@ $(document).on('keydown', function(e) {
       break;
     case "ArrowUp":
       state.rotX -= KEYBOARD_ROTATION_SPEED;
-      state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX)); // limitazione
+      state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX));
       e.preventDefault();
       break;
     case "ArrowDown":
       state.rotX += KEYBOARD_ROTATION_SPEED;
-      state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX)); // limitazione
+      state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX));
       e.preventDefault();
       break;
   }
 });
 
-//CONTROLLI MOUSE
 
-// CONTROLLI MOUSE - GESTIONE CLICK SICURA SENZA CONFLITTI DI TRASCINAMENTO
-let mouseStartX = 0;
-let mouseStartY = 0;
-
-$(canvas).on('mousedown', function(e) {
-  mouseStartX = e.clientX;
-  mouseStartY = e.clientY;
-});
-
-$(canvas).on('mouseup', function(e) {
-  // Calcola di quanti pixel si è spostato il mouse tra la pressione e il rilascio
-  const deltaX = Math.abs(e.clientX - mouseStartX);
-  const deltaY = Math.abs(e.clientY - mouseStartY);
-
-  // Se lo spostamento è minimo (meno di 5 pixel), l'utente voleva fare un CLICK, non ruotare
-  if (deltaX < 5 && deltaY < 5) {
+// --- 3. CONTROLLI MOUSE (Solo cambio Giorno/Notte al click su Desktop) ---
+$(canvas).on('click', function() {
+  const now = Date.now();
+  // Applichiamo lo stesso cooldown al mouse per sicurezza
+  if (now - lastTapTime > 400) {
+    lastTapTime = now;
     state.isNight = !state.isNight;
-    console.log("Cambio ciclo eseguito! Notte =", state.isNight);
-    
-    // Forza un aggiornamento immediato dell'interfaccia testuale
+    console.log("Cambio ciclo da Mouse! Notte =", state.isNight);
     updateHud();
   }
 });
 
-// GESTORI DEI PULSANTI
 
-// Pulsante Nutri - riduce la fame di 1 
-// >>> USO JQUERY: $('#id').on('click', ...) per i gestori dei pulsanti
+// --- 4. GESTORI DEI PULSANTI HUD ---
 $('#feedBtn').on('click', function() {
-  state.hungerInt = state.hungerInt - 1;
+  state.hungerInt = Math.max(0, state.hungerInt - 1);
 });
 
-// Pulsante Conforta - ripristina un passo dell'umore per clic
 $('#cheerBtn').on('click', function() {
   state.moodLevel = Math.max(0, state.moodLevel - 1);
- 
 });
 
 // CONTROLLI DAT.GUI
