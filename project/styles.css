@@ -201,35 +201,63 @@ canvas {
 }
 
 @media (max-width: 768px) {
+  /* Configura la griglia: pulsanti sopra, pannelli affiancati sotto */
   #ui {
-    flex-direction: column; /* Dispone i blocchi uno sopra l'altro su schermi piccoli */
-    align-items: stretch;   /* Allarga i pannelli per occupare lo spazio disponibile */
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-    gap: 8px;              /* Riduce lo spazio tra i pannelli per risparmiare pixel */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Divide lo schermo in due colonne uguali */
+    grid-template-areas: 
+      "feed cheer"
+      "hud legend"; /* Forza HUD e Controlli sulla stessa riga */
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    gap: 8px;
   }
 
-  /* Crea una riga dedicata solo ai due bottoni di interazione */
+  /* Pulsanti interazione in alto */
+  #feedBtn { grid-area: feed; }
+  #cheerBtn { grid-area: cheer; }
   #feedBtn, #cheerBtn {
-    flex: 1;
-    padding: 12px;
-    font-size: 14px;
+    padding: 10px;
+    font-size: 13px;
     text-align: center;
   }
 
-  /* Per mettere i due pulsanti uno di fianco all'altro e i pannelli sotto */
-  #ui {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas: 
-      "feed cheer"
-      "hud hud"
-      "legend legend";
+  /* HUD (A sinistra) */
+  #hud {
+    grid-area: hud;
+    min-width: 0; /* Rimuove il vincolo di larghezza minima */
+    padding: 8px 10px;
+    font-size: 11px;
   }
 
-  #feedBtn { grid-area: feed; }
-  #cheerBtn { grid-area: cheer; }
-  #hud { grid-area: hud; min-width: 0; }
-  .controls-legend { grid-area: legend; min-width: 0; font-size: 10px; }
+  /* Accorcia le barre di progresso per farle stare in poco spazio */
+  .progress-bar {
+    min-width: 50px; 
+    height: 10px;
+  }
+  
+  .stat-row {
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    width: 40px;
+    font-size: 11px;
+  }
+
+  /* PANNELLO COMANDI (A destra, sulla stessa riga dell'HUD) */
+  .controls-legend {
+    grid-area: legend;
+    min-width: 0; /* Rimuove il vincolo di larghezza minima */
+    padding: 8px 10px;
+    font-size: 10px;
+    line-height: 1.3;
+  }
+
+  .legend-title {
+    font-size: 9px;
+    margin-bottom: 2px;
+  }
 }
