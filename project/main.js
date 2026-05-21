@@ -453,7 +453,7 @@ canvas.addEventListener("touchstart", function(e) {
   touchStartX = t.clientX;
   touchStartY = t.clientY;
   hasMoved = false; 
-}, { passive: true });
+}, { passive: false });
 
 canvas.addEventListener("touchmove", function(e) {
   if (!touching) return;
@@ -483,6 +483,7 @@ canvas.addEventListener("touchend", function() {
   const now = Date.now();
   // Se non si è spostato ED è passato abbastanza tempo dall'ultimo switch (400ms)
   if (!hasMoved && (now - lastTapTime > 400)) {
+    if (e.cancelable) e.preventDefault();
     lastTapTime = now; // Salva il tempo di questo click
     state.isNight = !state.isNight;
     console.log("Cambio ciclo da Touch! Notte =", state.isNight);
