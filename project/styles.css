@@ -28,7 +28,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   background: #0b0f14;
-  touch-action: none; /* important for touch rotate */
+  touch-action: none;
   font-family: var(--font-body);
   color: #e8eef7;
 }
@@ -39,19 +39,28 @@ canvas {
   height: 100%;
 }
 
+/* ==========================================
+   STRUTTURA INTERFACCIA (UI) AFFIANCATA
+   ========================================== */
 #ui {
   position: fixed;
   left: 12px;
   right: 12px;
   bottom: 12px;
   display: flex;
-  gap: 12px;
-  align-items: flex-end;
-  pointer-events: none; /* let canvas receive touches, except buttons */
+  flex-direction: row; /* Elementi disposti in linea orizzontale */
+  align-items: flex-end; /* Allineati sul fondo */
+  gap: 14px;
+  pointer-events: none; /* Lascia passare i tocchi sul canvas per ruotare */
+  z-index: 1000; /* Sopra al canvas */
+}
+
+/* Riattiva i click sugli elementi dell'interfaccia */
+#feedBtn, #cheerBtn, #hud, .controls-legend {
+  pointer-events: auto;
 }
 
 #feedBtn, #cheerBtn {
-  pointer-events: auto;
   border: 0;
   padding: 14px 18px;
   border-radius: 16px;
@@ -60,31 +69,28 @@ canvas {
   font-weight: 700;
   letter-spacing: 0.4px;
   color: white;
-}
-
-#feedBtn {
-  background: #2d9cdb;
-}
-
-#cheerBtn {
-  background: #f2994a;
-}
-
-#feedBtn, #cheerBtn {
   transition: transform 220ms ease, box-shadow 220ms ease;
 }
 
-#hud span, #hud div { transition: transform 220ms ease; transform-origin: left center; }
+#feedBtn { background: #2d9cdb; }
+#cheerBtn { background: #f2994a; }
 
+#hud span, #hud div { 
+  transition: transform 220ms ease; 
+  transform-origin: left center; 
+}
+
+/* BOX STATISTICHE (HUD) */
 #hud {
-  pointer-events: none;
   padding: 12px 14px;
   border-radius: 16px;
   background: rgba(0,0,0,0.35);
   backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   line-height: 1.35;
   font-size: 14px;
   font-family: var(--font-hud);
+  min-width: 180px;
 }
 
 .stat-row {
@@ -106,11 +112,11 @@ canvas {
   letter-spacing: 0.3px;
 }
 
-#sizeVal,
-#timeVal {
+#sizeVal, #lightVal {
   font-family: var(--font-mono);
 }
 
+/* STRUTTURA DELLE BARRE DI PROGRESSO */
 .progress-bar {
   flex: 1;
   height: 14px;
@@ -135,10 +141,33 @@ canvas {
   background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
 }
 
+/* PANNELLO ISTRUZIONI */
+.controls-legend {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+  color: #a5b4fc;
+  line-height: 1.5;
+  min-width: 240px;
+}
+
+.legend-title {
+  font-weight: bold;
+  color: #ffcc00;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+
+/* SCHERMATA DI CARICAMENTO */
 #loadingOverlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 2000;
   display: flex;
   flex-direction: column;
   align-items: center;

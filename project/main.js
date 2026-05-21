@@ -200,17 +200,32 @@ void main() {
   // Shader sole: sfera emissiva usata come fonte di luce visibile
   const VS_SUN = `
   attribute vec3 aPos;
+  attribute vec2 aTexCoord;
+  varying vec2 vTexCoord;
   uniform mat4 uMVP;
   void main() {
+    vTexCoord = aTexCoord;
     gl_Position = uMVP * vec4(aPos, 1.0);
   }
   `;
 
   const FS_SUN = `
   precision mediump float;
+  varying vec2 vTexCoord;
   uniform vec3 uSunColor;
+  uniform sampler2D uSunTexture;
   void main() {
-    gl_FragColor = vec4(uSunColor, 1.0);
+    // Spostiamo la coordinata X verso sinistra (+0.25 sposta significativamente a sx)
+    vec2 uvSpostata = vec2(vTexCoord.x + 0.25, vTexCoord.y);
+
+    // Campioniamo la foto normalmente
+    vec4 texColor = texture2D(uSunTexture, uvSpostata);
+    
+    // Diminuiamo l'opacità sbiadendo la foto verso il bianco puro (75% bianco)
+    vec3 fotoSbiadita = mix(texColor.rgb, vec3(1.0), 0.75);
+
+    // Blending Moltiplica
+    gl_FragColor = vec4(uSunColor * fotoSbiadita, 1.0);
   }
   `;
 
@@ -232,7 +247,7 @@ if (!sunProgram) throw new Error('Failed to create sunProgram via webglUtils');
 
 //loading 
 
-const TOTAL_ASSETS = 5; // 3 OBJ + 2 texture
+const TOTAL_ASSETS = 6; // 3 OBJ + 3 texture
 let loadedAssets = 0;
 let initCoreReady = false;
 let appStarted = false;
@@ -477,7 +492,7 @@ canvas.addEventListener("touchmove", function(e) {
   state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX));
 }, { passive: true });
 
-canvas.addEventListener("touchend", function() {
+canvas.addEventListener("touchend", function(e) {
   touching = false;
 
   const now = Date.now();
@@ -589,6 +604,10 @@ let planetBufPos = null, planetBufNor = null, planetBufUV = null;
 let planetVertCount = 0;
 let planetTexture = null;
 
+
+//Sole o Luna
+let sunTexture = null;
+
 // Sfera condivisa (sfera.obj) riusata per sole e pianeta
 let sphereBufPos = null;
 let sphereVertCount = 0;
@@ -620,6 +639,9 @@ async function init() {
     planetBufNor = createArrayBuffer(sferaMesh.nor);
     planetBufUV = createArrayBuffer(sferaMesh.uv);
     planetVertCount = sphereVertCount;
+
+    //carica texture sole e luna
+    sunTexture = loadTexture("assets/foto.jpg");
 
     initCoreReady = true;
     tryStartApp();
@@ -882,28 +904,38 @@ function drawSun(rotatedVP, sunBasePos, currentSunColor) { // Aggiunto parametro
 
   gl.useProgram(sunProgram);
 
-  const sunPosLoc = gl.getAttribLocation(sunProgram, "aPos");
-  gl.bindBuffer(gl.ARRAY_BUFFER, sphereBufPos);
-  gl.enableVertexAttribArray(sunPosLoc);
-  gl.vertexAttribPointer(sunPosLoc, 3, gl.FLOAT, false, 0, 0);
+  // 1. Collega le UV specificatamente per lo shader del sole utilizzando il buffer globale
+  const sunTexLoc = gl.getAttribLocation(sunProgram, "aTexCoord");
+  gl.bindBuffer(gl.ARRAY_BUFFER, planetBufUV); // Usa il buffer UV della sfera condivisa
+  gl.enableVertexAttribArray(sunTexLoc);
+  gl.vertexAttribPointer(sunTexLoc, 2, gl.FLOAT, false, 0, 0);
 
-  const sunUMVP = gl.getUniformLocation(sunProgram, "uMVP");
-  const sunUColor = gl.getUniformLocation(sunProgram, "uSunColor");
+  // 2. Attiva e lega la texture del sole
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, sunTexture);
 
-  // Sole / Luna
-  const sunScale = 0.35;
-  const sunMVP = mat4Mul(rotatedVP, mat4Mul(
-    mat4Translate(sunBasePos[0], sunBasePos[1], sunBasePos[2]),
-    mat4Scale(sunScale, sunScale, sunScale)
-  ));
-  gl.uniformMatrix4fv(sunUMVP, false, sunMVP);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  const samplerLoc = gl.getUniformLocation(sunProgram, "uSunTexture");
+  gl.uniform1i(samplerLoc, 0);
+
+  // 3. Calcolo matrici e invio Uniform standard
+  const sunUMVP = gl.getUniformLocation(sunProgram, "uMVP"); //
+  const sunUColor = gl.getUniformLocation(sunProgram, "uSunColor"); //
+
+  const sunScale = 0.55; //
+  const sunMVP = mat4Mul(rotatedVP, mat4Mul( //
+    mat4Translate(sunBasePos[0], sunBasePos[1], sunBasePos[2]), //
+    mat4Scale(sunScale, sunScale, sunScale) //
+  )); //
+  gl.uniformMatrix4fv(sunUMVP, false, sunMVP); //
   
-  // Applica il colore passato (giallo di giorno, azzurro pallido di notte)
-  gl.uniform3fv(sunUColor, currentSunColor); 
+  gl.uniform3fv(sunUColor, currentSunColor);  //
   
-  gl.drawArrays(gl.TRIANGLES, 0, sphereVertCount);
+  gl.drawArrays(gl.TRIANGLES, 0, sphereVertCount); //
 
-  gl.useProgram(program);
+  gl.useProgram(program); //
 }
 
 
@@ -916,6 +948,7 @@ function render() {
   bindAttrib("aPos", 3, bufPos);
   bindAttrib("aNor", 3, bufNor);
   bindAttrib("aCol", 3, bufCol);
+  bindAttrib("aTexCoord", 2, planetBufUV);
 
   // Uniform
   gl.uniform1f(uSad, state.moodLevel / MOOD_MAX);
