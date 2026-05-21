@@ -16,7 +16,7 @@
 
 :root {
   --font-display: "Coaster Sans", "Comic Sans MS", cursive;
-  --font-mono: "Panchi Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-mono: "Panchi Mono", "SFMono-Regular", Menlo, Consolas, \"Liberation Mono\", monospace;
   --font-body: var(--font-mono);
   --font-game-ui: var(--font-mono);
   --font-hud: var(--font-mono);
@@ -39,23 +39,23 @@ canvas {
   height: 100%;
 }
 
-/* ==========================================
-   STRUTTURA INTERFACCIA (UI) AFFIANCATA
-   ========================================== */
+/* ==========================================================
+   LAYOUT PC / TABLET GRANDE (Tutto su una riga orizzontale)
+   ========================================================== */
 #ui {
   position: fixed;
   left: 12px;
   right: 12px;
   bottom: 12px;
   display: flex;
-  flex-direction: row; /* Elementi disposti in linea orizzontale */
-  align-items: flex-end; /* Allineati sul fondo */
+  flex-direction: row;
+  align-items: flex-end;
   gap: 14px;
-  pointer-events: none; /* Lascia passare i tocchi sul canvas per ruotare */
-  z-index: 1000; /* Sopra al canvas */
+  pointer-events: none;
+  z-index: 1000;
 }
 
-/* Riattiva i click sugli elementi dell'interfaccia */
+/* Riattiva i click sugli elementi */
 #feedBtn, #cheerBtn, #hud, .controls-legend {
   pointer-events: auto;
 }
@@ -116,7 +116,7 @@ canvas {
   font-family: var(--font-mono);
 }
 
-/* STRUTTURA DELLE BARRE DI PROGRESSO */
+/* BARRE DI PROGRESSO */
 .progress-bar {
   flex: 1;
   height: 14px;
@@ -141,7 +141,7 @@ canvas {
   background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
 }
 
-/* PANNELLO ISTRUZIONI */
+/* PANNELLO ISTRUZIONI COMPLETO */
 .controls-legend {
   padding: 12px 14px;
   border-radius: 16px;
@@ -200,64 +200,67 @@ canvas {
   to { transform: rotate(360deg); }
 }
 
+
+/* ==========================================================
+   LAYOUT SMARTPHONE / MOBILE (Ottimizzato e compresso)
+   ========================================================== */
 @media (max-width: 768px) {
-  /* Configura la griglia: pulsanti sopra, pannelli affiancati sotto */
   #ui {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Divide lo schermo in due colonne uguali */
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
     grid-template-areas: 
       "feed cheer"
-      "hud legend"; /* Forza HUD e Controlli sulla stessa riga */
-    left: 8px;
-    right: 8px;
-    bottom: 8px;
-    gap: 8px;
+      "hud legend" !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+    gap: 8px !important;
   }
 
-  /* Pulsanti interazione in alto */
-  #feedBtn { grid-area: feed; }
-  #cheerBtn { grid-area: cheer; }
+  #feedBtn { grid-area: feed !important; }
+  #cheerBtn { grid-area: cheer !important; }
+  
   #feedBtn, #cheerBtn {
-    padding: 10px;
-    font-size: 13px;
-    text-align: center;
+    padding: 10px !important;
+    font-size: 13px !important;
+    text-align: center !important;
   }
 
-  /* HUD (A sinistra) */
+  /* HUD a sinistra */
   #hud {
-    grid-area: hud;
-    min-width: 0; /* Rimuove il vincolo di larghezza minima */
-    padding: 8px 10px;
-    font-size: 11px;
+    grid-area: hud !important;
+    min-width: 0 !important;
+    padding: 8px 10px !important;
+    font-size: 11px !important;
   }
 
-  /* Accorcia le barre di progresso per farle stare in poco spazio */
+  /* Accorcia vistosamente le barre su mobile */
   .progress-bar {
-    min-width: 50px; 
-    height: 10px;
+    min-width: 45px !important;
+    height: 10px !important;
   }
   
   .stat-row {
-    gap: 6px;
-    margin-bottom: 4px;
+    gap: 6px !important;
+    margin-bottom: 4px !important;
   }
 
   .stat-label {
-    width: 40px;
-    font-size: 11px;
+    width: 38px !important;
+    font-size: 11px !important;
   }
 
-  /* PANNELLO COMANDI (A destra, sulla stessa riga dell'HUD) */
+  /* Legenda istruzioni a destra dell'HUD */
   .controls-legend {
-    grid-area: legend;
-    min-width: 0; /* Rimuove il vincolo di larghezza minima */
-    padding: 8px 10px;
-    font-size: 10px;
-    line-height: 1.3;
+    grid-area: legend !important;
+    min-width: 0 !important;
+    padding: 8px 10px !important;
+    font-size: 9.5px !important;
+    line-height: 1.3 !important;
   }
 
   .legend-title {
-    font-size: 9px;
-    margin-bottom: 2px;
+    font-size: 9px !important;
+    margin-bottom: 2px !important;
   }
 }
