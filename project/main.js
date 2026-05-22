@@ -479,7 +479,7 @@ canvas.addEventListener("touchmove", function(e) {
   lastTouchX = t.clientX;
   lastTouchY = t.clientY;
 
-  // Controllo base standard (se si muove anche di poco, è una rotazione)
+// Controllo base standard (se si muove anche di poco, è una rotazione)
   const totalDistX = Math.abs(t.clientX - touchStartX);
   const totalDistY = Math.abs(t.clientY - touchStartY);
   if (totalDistX > 5 || totalDistY > 5) {
@@ -490,8 +490,12 @@ canvas.addEventListener("touchmove", function(e) {
   state.rotY += dx * s;
   state.rotX += dy * s;
   state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX));
-}, { passive: true });
 
+  // Forza dat.gui a muovere gli slider durante il touch (SPOSTATO DENTRO)
+  if (guiRotY) guiRotY.updateDisplay();
+  if (guiRotX) guiRotX.updateDisplay();
+
+}, { passive: true }); 
 canvas.addEventListener("touchend", function(e) {
   touching = false;
 
@@ -533,6 +537,9 @@ $(document).on('keydown', function(e) {
       e.preventDefault();
       break;
   }
+
+  if (guiRotY) guiRotY.updateDisplay();
+  if (guiRotX) guiRotX.updateDisplay();
 });
 
 
@@ -561,32 +568,21 @@ $('#cheerBtn').on('click', function() {
 // CONTROLLI DAT.GUI
 // >>> USO LIBRERIA DAT.GUI
 // dat.GUI crea un pannello di controllo flottante in alto a destra
-// Permette di regolare rotazione e auto-rotazione in tempo reale
+// Permette di regolare rotazione
 // La libreria è caricata da dat.gui.js in index.html
+// --- VARIABILI GLOBALI PER I CONTROLLER DAT.GUI ---
+
+let guiRotY, guiRotX;
+
+// CONTROLLI DAT.GUI AGGIORNATI
 if (window.dat && dat.GUI) {
-  // Crea un nuovo pannello GUI
   const gui = new dat.GUI();
   
-  // Oggetto valori di controllo (dat.GUI legge/scrive qui)
-  const controls = {
-    rotY: state.rotY,
-    rotX: state.rotX,
-    camX: state.camX,
-    camY: state.camY,
-    camZ: state.camZ,
-  };
-
-  // >>> gui.add(oggetto, proprietà, min, max) - Crea un controllo slider
-  // .step(0.01) - Imposta l'incremento dello slider
-  // .name('Etichetta') - Nome visualizzato nella GUI
-  // .onChange(callback) - Chiamato quando il valore cambia
-  gui.add(controls, 'rotY', -Math.PI * 2, Math.PI * 2).step(0.01).name('Rotate Y').onChange(function(v) { state.rotY = v; });
-  gui.add(controls, 'rotX', -0.6, 0.9).step(0.01).name('Rotate X').onChange(function(v) { state.rotX = v; });
+  // Associano i controller direttamente all'oggetto 'state' principale
+  guiRotY = gui.add(state, 'rotY', -Math.PI * 2, Math.PI * 2).step(0.01).name('Rotate Y');
+  guiRotX = gui.add(state, 'rotX', -0.6, 0.9).step(0.01).name('Rotate X');
   
-  // Controlli posizione camera
-  gui.add(controls, 'camX', -10, 10).step(0.1).name('Cam X').onChange(function(v) { state.camX = v; });
-  gui.add(controls, 'camY', -10, 10).step(0.1).name('Cam Y').onChange(function(v) { state.camY = v; });
-  gui.add(controls, 'camZ', 1, 20).step(0.1).name('Cam Z').onChange(function(v) { state.camZ = v; });
+
 }
 
 // CARICAMENTO ASSET E INIZIALIZZAZIONE
@@ -1016,5 +1012,5 @@ function render() {
   if (err !== 0) console.warn('GL error after draw:', err);
 }
 
-}
 
+}
