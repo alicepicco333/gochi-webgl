@@ -426,7 +426,7 @@ const state = {
 
   // Rotazione guidata dal touch
   rotY: 0,
-  rotX: 0.2,
+  rotX: 0,
 
   // Posizione camera
   camX: 0,
@@ -489,7 +489,8 @@ canvas.addEventListener("touchmove", function(e) {
   const s = 0.006; 
   state.rotY += dx * s;
   state.rotX += dy * s;
-  state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX));
+  state.rotX = Math.max(-Math.PI, Math.min(Math.PI, state.rotX));
+  state.rotY = Math.max(-Math.PI, Math.min(Math.PI, state.rotY));
 
   // Forza dat.gui a muovere gli slider durante il touch (SPOSTATO DENTRO)
   if (guiRotY) guiRotY.updateDisplay();
@@ -520,20 +521,22 @@ $(document).on('keydown', function(e) {
   switch (e.key) {
     case "ArrowLeft":
       state.rotY -= KEYBOARD_ROTATION_SPEED;
+      state.rotY = Math.max(-1.0, Math.min(1.0, state.rotY)); 
       e.preventDefault();
       break;
     case "ArrowRight":
       state.rotY += KEYBOARD_ROTATION_SPEED;
+      state.rotY = Math.max(-1.0, Math.min(1.0, state.rotY)); 
       e.preventDefault();
       break;
     case "ArrowUp":
       state.rotX -= KEYBOARD_ROTATION_SPEED;
-      state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX));
+      state.rotX = Math.max(-1.0, Math.min(1.0, state.rotX)); 
       e.preventDefault();
       break;
     case "ArrowDown":
       state.rotX += KEYBOARD_ROTATION_SPEED;
-      state.rotX = Math.max(-0.6, Math.min(0.9, state.rotX));
+      state.rotX = Math.max(-1.0, Math.min(1.0, state.rotX));
       e.preventDefault();
       break;
   }
@@ -579,8 +582,8 @@ if (window.dat && dat.GUI) {
   const gui = new dat.GUI();
   
   // Associano i controller direttamente all'oggetto 'state' principale
-  guiRotY = gui.add(state, 'rotY', -Math.PI * 2, Math.PI * 2).step(0.01).name('Rotate Y');
-  guiRotX = gui.add(state, 'rotX', -0.6, 0.9).step(0.01).name('Rotate X');
+  guiRotY = gui.add(state, 'rotY', -1, 1).step(0.01).name('Rotate Y');
+  guiRotX = gui.add(state, 'rotX', -1, 1).step(0.01).name('Rotate X');
   
 
 }
