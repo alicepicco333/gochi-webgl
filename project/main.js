@@ -489,12 +489,10 @@ canvas.addEventListener("touchmove", function(e) {
   const s = 0.006; 
   state.rotY += dx * s;
   state.rotX += dy * s;
-  state.rotX = Math.max(-Math.PI, Math.min(Math.PI, state.rotX));
-  state.rotY = Math.max(-Math.PI, Math.min(Math.PI, state.rotY));
+  state.rotY = Math.max(-1.0, Math.min(1.0, state.rotY)); 
+  state.rotX = Math.max(-1.0, Math.min(1.0, state.rotX));
 
-  // Forza dat.gui a muovere gli slider durante il touch (SPOSTATO DENTRO)
-  if (guiRotY) guiRotY.updateDisplay();
-  if (guiRotX) guiRotX.updateDisplay();
+
 
 }, { passive: true }); 
 canvas.addEventListener("touchend", function(e) {
