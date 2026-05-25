@@ -959,9 +959,11 @@ function render() {
   const camUp = [0, 1, 0];
   const viewMatrix = mat4LookAt(camEye, camLook, camUp);
 
-  // --- Rotazione scena dai controlli touch (ruota l'intera scena) ---
-  const sceneRotY = mat4RotateY(state.rotY);
-  const sceneRotX = mat4RotateX(state.rotX);
+  // --- Rotazione scena dai controlli touch  ---
+ const ROT_RANGE = Math.PI * 2;
+
+const sceneRotY = mat4RotateY(state.rotY * ROT_RANGE);
+const sceneRotX = mat4RotateX(state.rotX * ROT_RANGE);
   const sceneRotation = mat4Mul(sceneRotX, sceneRotY);
 
   const sunLightPos = mat4TransformPoint(sceneRotation, SUN_BASE_POS);
