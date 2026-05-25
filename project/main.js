@@ -495,6 +495,7 @@ canvas.addEventListener("touchmove", function(e) {
   const s = 0.006; 
   state.rotY += dx * s;
   state.rotX += dy * s;
+  
   state.rotY = Math.max(-1.0, Math.min(1.0, state.rotY)); 
   state.rotX = Math.max(-1.0, Math.min(1.0, state.rotX));
 
@@ -581,6 +582,11 @@ $('#cheerBtn').on('click', function() {
 // --- VARIABILI GLOBALI PER I CONTROLLER DAT.GUI ---
 
 let guiRotY, guiRotX;
+
+function updateDisplay(rotY, rotX) {
+  if (guiRotY) guiRotY.setValue(rotY);
+  if (guiRotX) guiRotX.setValue(rotX);
+}
 
 // CONTROLLI DAT.GUI AGGIORNATI
 if (window.dat && dat.GUI) {
