@@ -470,6 +470,12 @@ canvas.addEventListener("touchstart", function(e) {
   hasMoved = false; 
 }, { passive: false });
 
+function updateDisplay(rotY, rotX) {
+  if (guiRotY) guiRotY.setValue(rotY);
+  if (guiRotX) guiRotX.setValue(rotX);
+}
+
+
 canvas.addEventListener("touchmove", function(e) {
   if (!touching) return;
 
@@ -492,7 +498,7 @@ canvas.addEventListener("touchmove", function(e) {
   state.rotY = Math.max(-1.0, Math.min(1.0, state.rotY)); 
   state.rotX = Math.max(-1.0, Math.min(1.0, state.rotX));
 
-  updateDisplay(Math.max(-1.0, Math.min(1.0, state.rotY)), Math.max(-1.0, Math.min(1.0, state.rotX)));
+  updateDisplay(state.rotY, state.rotX);
 
 
 
@@ -541,8 +547,7 @@ $(document).on('keydown', function(e) {
       break;
   }
 
-  if (guiRotY) guiRotY.updateDisplay();
-  if (guiRotX) guiRotX.updateDisplay();
+  updateDisplay(state.rotY, state.rotX);
 });
 
 
@@ -752,6 +757,7 @@ function updateHud() {
 if (lightVal) {
   lightVal.textContent = state.isNight ? 'Night' : 'Day';
 }}
+
 
 function drawCreature(rotatedVP, sceneRotation, planeY) {
   const meshScale = state.size;
