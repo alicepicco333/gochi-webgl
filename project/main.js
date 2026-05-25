@@ -492,6 +492,8 @@ canvas.addEventListener("touchmove", function(e) {
   state.rotY = Math.max(-1.0, Math.min(1.0, state.rotY)); 
   state.rotX = Math.max(-1.0, Math.min(1.0, state.rotX));
 
+  updateDisplay(Math.max(-1.0, Math.min(1.0, state.rotY)), Math.max(-1.0, Math.min(1.0, state.rotX)));
+
 
 
 }, { passive: true }); 
